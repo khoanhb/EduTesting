@@ -1,0 +1,47 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName "Times New Roman"
+actor "Giảng viên / Giám thị" as gv
+actor "Admin" as admin
+actor "Sinh viên" as sv
+rectangle "Thi, chấm, giám sát và kết quả - Phạm vi mục tiêu" {
+  usecase "UC10: Giám sát và vi phạm" as monitor
+  usecase "Xem log theo lượt thi" as logs
+  usecase "Phân tích rủi ro (dự kiến)" as risk
+  usecase "Lập/xem biên bản theo lượt" as report
+  usecase "UC11: Làm bài thi" as exam
+  usecase "Lưu câu trả lời theo lượt" as save
+  usecase "Ghi nhận vi phạm" as violation
+  usecase "Nộp / Thu bài đúng một lần" as submit
+  usecase "UC08: Chấm và đối soát" as grading
+  usecase "Chấm theo đáp án/từ khóa" as autoGrade
+  usecase "GV chấm/sửa điểm" as manualGrade
+  usecase "UC12: Kết quả và lịch sử" as result
+  usecase "Xem lại bài theo quyền" as review
+  usecase "Xem biên bản chỉ đọc" as readReport
+  logs ..> monitor : <<extend>>
+  risk ..> monitor : <<extend>>\n[có dịch vụ]
+  report ..> monitor : <<extend>>\n[được phép xử lý]
+  exam ..> save : <<include>>
+  violation ..> exam : <<extend>>\n[antiCheat bật]
+  exam ..> submit : <<include>>
+  grading ..> autoGrade : <<include>>
+  manualGrade ..> grading : <<extend>>
+  review ..> result : <<extend>>\n[quyền xem lại cho phép]
+  readReport ..> result : <<extend>>\n[có biên bản được phép đọc]
+}
+gv -- monitor
+gv -- grading
+admin -- monitor
+sv -- exam
+sv -- result
+note bottom of result
+  PENDING: ẩn điểm/đáp án, chặn xem lại.
+  RESOLVED: xét quyền công bố và allowReview riêng.
+  CANCELLED: chặn xem lại.
+  AI rủi ro không tự thay thế ngưỡng đình chỉ theo quy chế.
+end note
+@enduml

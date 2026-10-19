@@ -1,0 +1,64 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam maxMessageSize 110
+title UC10 - Giám sát và biên bản (thiết kế tích hợp dự kiến)
+actor "Sinh viên" as sv
+participant "Giao diện sinh viên" as ui
+participant "FastAPI (Python)" as api
+database "Kho dữ liệu" as db
+participant "Phân tích rủi ro (dự kiến)" as risk
+participant "Giao diện giám thị" as monitor
+actor "Giảng viên" as gv
+note over ui, monitor
+  FE hiện dùng state/mock; API, WebSocket, AI và đồng bộ biên bản chưa triển khai.
+  Giao thức cập nhật và bước hoàn tất xử lý/công bố cần BE xác nhận.
+end note
+gv -> monitor : Mở giám sát trong phạm vi phụ trách
+monitor -> api : GET /teacher/live-rooms; GET /teacher/violations
+api --> monitor : Snapshot dữ liệu theo quyền
+opt Có kênh cập nhật được thống nhất
+  monitor -> api : Đăng ký WS /ws/rooms theo quyền phòng
+end
+alt antiCheat = false
+  ui -> ui : Không đăng ký listener giám sát
+else antiCheat = true và lượt đang làm
+  sv -> ui : Chuyển tab/blur/thu nhỏ cửa sổ
+  ui -> ui : Lọc sự kiện gần nhau
+  ui -> api : POST /attempts/{attemptId}/violations\n(eventId, type, occurredAt)
+  api -> db : Kiểm tra lượt và eventId; lưu nếu chưa ghi nhận
+  alt Sự kiện mới hợp lệ
+    api -> db : Tăng số lần theo attemptId
+  else Trùng hoặc lượt đã kết thúc
+    api -> db : Đọc trạng thái, không tăng số lần
+  end
+  opt Có dịch vụ phân tích rủi ro
+    api -> risk : Phân tích các sự kiện của lượt
+    risk --> api : Mức rủi ro và gợi ý tham khảo
+  end
+  api --> monitor : Snapshot/cập nhật sự kiện nếu có kênh đã chốt
+  alt Chạm ngưỡng 3 lần và lượt chưa bị đình chỉ
+    api -> db : Đình chỉ, thu bài đúng một lần; xử lý vi phạm = PENDING
+    api --> ui : Trạng thái đình chỉ, không trả điểm/đáp án
+    ui -> ui : Dừng timer, khóa bài; không mở modal hết giờ
+    ui --> sv : Chờ xử lý biên bản
+  else Chưa chạm ngưỡng
+    api --> ui : Số lần và trạng thái hiện tại
+    ui --> sv : Cảnh báo nếu lượt vẫn đang làm
+  end
+end
+gv -> monitor : Chọn đúng SV, đề và lượt; lập biên bản
+monitor -> api : POST /teacher/violations/{id}/report\n(attemptId, penalty, detail)
+api -> db : Kiểm tra quyền, lưu biên bản, người lập và thời gian server
+api --> monitor : Biên bản đã lưu; trạng thái xử lý hiện tại
+note over api, db
+  Có biên bản chưa đồng nghĩa đã xử lý xong hoặc đã công bố điểm.
+  Bước hoàn tất quyết định và quyền công bố chưa chốt endpoint.
+end note
+opt Quyết định xử lý được hoàn tất bởi chủ thể có quyền
+  api -> db : Cập nhật RESOLVED/CANCELLED và điểm theo hình thức xử lý
+end
+ui -> api : GET /attempts/{attemptId}/result
+api --> ui : Quyền và dữ liệu được phép công bố theo UC12
+@enduml

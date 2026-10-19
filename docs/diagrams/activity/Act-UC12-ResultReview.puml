@@ -1,0 +1,60 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+title UC12 - Kết quả và xem lại (thiết kế tích hợp dự kiến)
+|Sinh viên|
+start
+:Chọn kết quả sau nộp hoặc một lượt trong lịch sử;
+|Backend|
+note right
+  FE hiện áp dụng examAccess trên mock.
+  Mô hình PENDING/RESOLVED/CANCELLED và quyền từ server là đề xuất.
+end note
+:Kiểm tra chủ lượt thi và quyền truy cập;
+if (Được truy cập?) then (Có)
+  :Đọc kết quả, trạng thái xử lý và chính sách công bố;
+else (Không)
+  |Giao diện|
+  :Báo không tìm thấy/không có quyền;
+  stop
+endif
+|Giao diện|
+:Hiển thị trạng thái, lượt, thời gian nộp;
+if (Vi phạm còn PENDING?) then (Có)
+  :Thông báo chờ xử lý;
+  :Ẩn điểm, số câu đúng/sai/chưa làm và đáp án;
+  :Chặn xem lại bài;
+else (Không)
+  if (Điểm đã được công bố và là số hợp lệ?) then (Có)
+    :Hiển thị điểm, bao gồm điểm 0;
+  else (Không)
+    :Hiển thị "Chưa công bố điểm";
+  endif
+  if (allowReview bật và không bị hủy kết quả\nvà quyền lượt cho phép?) then (Có)
+    |Sinh viên|
+    :Yêu cầu xem lại bài;
+    |Backend|
+    :Kiểm tra lại quyền tại endpoint review;
+    if (Được xem điểm và chi tiết?) then (Có)
+      :Trả snapshot bài làm, đáp án, điểm từng câu và lời giải;
+      |Giao diện|
+      :Hiển thị đúng/sai, số câu và lời giải;
+    else (Chỉ được xem bài)
+      |Backend|
+      :Chỉ trả câu hỏi/câu trả lời của SV;
+      :Không trả đáp án chuẩn, điểm từng câu, lời giải hay nhãn đúng/sai;
+      |Giao diện|
+      :Hiển thị bài làm với nhãn trung tính;
+    endif
+  else (Không)
+    |Giao diện|
+    :Khóa xem lại, kể cả truy cập URL trực tiếp;
+  endif
+endif
+if (Có biên bản được phép đọc?) then (Có)
+  :Cho xem biên bản đúng attemptId ở chế độ chỉ đọc;
+endif
+stop
+@enduml

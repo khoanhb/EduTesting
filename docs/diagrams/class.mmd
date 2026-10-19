@@ -1,0 +1,195 @@
+---
+title: EduTesting - Mô hình lớp nghiệp vụ (đề xuất cho Python/FastAPI)
+---
+%% Các lớp dưới đây là khái niệm miền nghiệp vụ, không phải React class component.
+%% Dịch vụ/thuộc tính là đề xuất BE, chưa có ORM hoặc các lớp Python triển khai.
+classDiagram
+direction TB
+class User {
+  +str id
+  +str identifier
+  +str role
+  +str status
+}
+class Subject {
+  +str id
+  +str code
+  +str name
+}
+class Chapter {
+  +str id
+  +str name
+  +int order
+}
+class TeachingAssignment
+class QuestionBank
+class Question {
+  +str id
+  +str type
+  +str difficulty
+  +list acceptedKeywords
+  +bool isCaseSensitive
+  +bool allowPartialKeywordScore
+}
+class Answer {
+  +str id
+  +str content
+  +bool isCorrect
+}
+class AIGenerationRequest
+class Semester {
+  +str id
+  +str label
+}
+class Exam {
+  +str id
+  +str examCode
+  +str category
+  +str status
+  +datetime openAt
+  +datetime closeAt
+  +int durationMinutes
+  +int maxAttempts
+  +bool antiCheat
+  +bool showScoreImmediately
+  +bool allowReview
+}
+class ExamMatrix
+class ExamQuestion {
+  +int order
+  +float maxScore
+}
+class ExamCode {
+  +str testCode
+  +list questionOrder
+  +dict answerOrder
+}
+class ExamRoom {
+  +str roomCode
+  +int capacity
+}
+class ExamAssignment
+class ExamAttempt {
+  +str id
+  +int attemptNumber
+  +str status
+  +str violationResolution
+  +datetime startedAt
+  +datetime expiresAt
+  +datetime submittedAt
+}
+class AttemptQuestion {
+  +int order
+  +dict questionSnapshot
+  +dict gradingSnapshot
+}
+class StudentAnswer {
+  +str textAnswer
+  +float gradedScore
+  +str gradingStatus
+  +str teacherComment
+}
+class SelectedAnswer
+class ExamResult {
+  +float rawScore
+  +float score
+  +bool scorePublished
+  +datetime publishedAt
+}
+class ViolationLog {
+  +str eventId
+  +str type
+  +datetime occurredAt
+}
+class ViolationReport {
+  +str penaltyCode
+  +str detail
+  +datetime reportedAt
+  +datetime resolvedAt
+}
+class ResultAccess {
+  <<valueObject>>
+  +bool canShowScore
+  +bool canReview
+  +bool canShowDetails
+}
+class AIQuestionService {
+  <<service>>
+  +generate_questions()
+}
+class ExamService {
+  <<service>>
+  +start_or_resume_attempt()
+  +save_answers()
+  +submit_once()
+}
+class GradingService {
+  <<service>>
+  +match_keywords()
+  +save_manual_grades()
+  +recalculate_result()
+}
+class MonitoringService {
+  <<service>>
+  +record_event_once()
+  +suspend_attempt()
+  +save_report()
+}
+class ResultAccessPolicy {
+  <<service>>
+  +evaluate_permissions()
+}
+Subject "1" --> "0..*" Chapter
+User "1" --> "0..*" TeachingAssignment : teacher
+Subject "1" --> "0..*" TeachingAssignment
+Subject "1" --> "0..*" QuestionBank
+User "1" --> "0..*" QuestionBank : manages
+QuestionBank "1" --> "0..*" Question
+Chapter "1" --> "0..*" Question
+Question "1" --> "0..*" Answer
+User "1" --> "0..*" AIGenerationRequest : requests
+Subject "1" --> "0..*" AIGenerationRequest
+Chapter "0..1" --> "0..*" AIGenerationRequest
+AIQuestionService ..> AIGenerationRequest
+AIQuestionService ..> Question
+Semester "1" --> "0..*" Exam
+Subject "1" --> "0..*" Exam
+User "1" --> "0..*" Exam : creates
+Exam "1" --> "0..*" ExamMatrix
+Chapter "1" --> "0..*" ExamMatrix
+Exam "1" --> "0..*" ExamQuestion
+Question "1" --> "0..*" ExamQuestion
+Exam "1" --> "0..*" ExamCode
+Exam "1" --> "0..*" ExamRoom
+Exam "1" --> "0..*" ExamAssignment
+User "1" --> "0..*" ExamAssignment : student
+Exam "1" --> "0..*" ExamAttempt
+User "1" --> "0..*" ExamAttempt : student
+ExamCode "1" --> "0..*" ExamAttempt
+ExamRoom "1" --> "0..*" ExamAttempt
+ExamAttempt "1" --> "1..*" AttemptQuestion : snapshot
+Question "1" --> "0..*" AttemptQuestion : source
+AttemptQuestion "1" --> "0..1" StudentAnswer
+StudentAnswer "1" --> "0..*" SelectedAnswer
+Answer "1" --> "0..*" SelectedAnswer
+ExamAttempt "1" --> "0..1" ExamResult
+ExamAttempt "1" --> "0..*" ViolationLog
+ExamAttempt "1" --> "0..1" ViolationReport
+User "1" --> "0..*" ViolationReport : reports
+ExamService ..> Exam
+ExamService ..> ExamAttempt
+GradingService ..> StudentAnswer
+GradingService ..> ExamResult
+GradingService ..> ViolationReport
+MonitoringService ..> ViolationLog
+MonitoringService ..> ExamAttempt
+MonitoringService ..> ViolationReport
+ResultAccessPolicy ..> Exam
+ResultAccessPolicy ..> ExamAttempt
+ResultAccessPolicy ..> ExamResult
+ResultAccessPolicy ..> ResultAccess
+note for Exam "maxAttempts=0 nghĩa là không giới hạn; trạng thái do BE quyết định theo lịch."
+note for ExamAttempt "violationResolution: NONE / PENDING / RESOLVED / CANCELLED (cần BE chốt)."
+note for ViolationReport "Gắn đúng attemptId. Có biên bản chưa đồng nghĩa xử lý xong hoặc công bố điểm."
+note for ResultAccess "Quyền suy ra cho response, không bắt buộc lưu thành bảng DB."
+note for AttemptQuestion "Giữ snapshot để câu hỏi gốc thay đổi không làm sai bài đã thi. gradingSnapshot chỉ dùng ở BE."

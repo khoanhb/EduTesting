@@ -1,0 +1,64 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+title UC10 - Giám sát và biên bản (thiết kế tích hợp dự kiến)
+|Giao diện sinh viên|
+start
+note right
+  Hiện FE đếm sự kiện cục bộ; monitor dùng dữ liệu mẫu.
+  API, lưu log, AI và cập nhật thời gian thực chưa tích hợp.
+end note
+if (antiCheat bật và lượt đang làm?) then (Có)
+  :Theo dõi chuyển tab, blur, thu nhỏ cửa sổ;
+else (Không)
+  :Không đăng ký giám sát;
+  stop
+endif
+:Sự kiện hợp lệ phát sinh;
+:Lọc sự kiện gần nhau theo quy tắc đã chốt;
+:Gửi eventId, attemptId, loại và thời gian;
+|Backend|
+:Kiểm tra quyền lượt, trạng thái và chống trùng eventId;
+if (Sự kiện được chấp nhận?) then (Có)
+  :Lưu ViolationLog theo lượt thi;
+  :Tăng số lần vi phạm;
+else (Không)
+  :Trả trạng thái hiện tại, không tăng số lần;
+  stop
+endif
+if (Có dịch vụ phân tích rủi ro?) then (Có)
+  :Nhận mức rủi ro/gợi ý để giám thị tham khảo;
+  note right: Điểm rủi ro AI không tự thay đổi ngưỡng đình chỉ.
+endif
+:Cung cấp snapshot/cập nhật cho giám thị;
+if (Số lần chạm ngưỡng 3?) then (Có)
+  :Đình chỉ lượt, thu bài đúng một lần;
+  :Đặt trạng thái xử lý vi phạm PENDING;
+  |Giao diện sinh viên|
+  :Dừng timer, khóa bài, hiện modal đình chỉ;
+  :Ẩn điểm/đáp án và chặn xem lại khi chờ xử lý;
+else (Chưa)
+  |Giao diện sinh viên|
+  :Hiển thị cảnh báo lần 1 hoặc 2;
+  :Cho quay lại làm bài;
+  stop
+endif
+|Giảng viên|
+:Xem sự kiện và đúng lượt thi bị đình chỉ;
+:Lập biên bản với hình thức xử lý và mô tả;
+|Backend|
+:Kiểm tra phạm vi GV, lưu người lập và thời gian;
+:Lưu ViolationReport gắn với attemptId;
+if (Quyết định xử lý đã hoàn tất?) then (Có)
+  :Cập nhật RESOLVED hoặc CANCELLED;
+  :Tính lại điểm chính thức nếu cần;
+else (Chưa)
+  :Giữ PENDING, không tự công bố điểm;
+endif
+|Giao diện|
+:Đọc lại trạng thái ở monitor, analytics và kết quả SV;
+:Áp dụng chính sách công bố/xem lại theo UC12;
+stop
+@enduml

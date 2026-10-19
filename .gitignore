@@ -1,0 +1,38 @@
+# Dependencies and generated output
+node_modules/
+dist/
+dist-ssr/
+coverage/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.sample
+*.local
+*.pem
+*.key
+
+# Logs and local editor state
+logs/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Local notes, design documents and handover material
+/AI-chat/
+/design/
+/source_code/handover/
+/source_code/context.md
+/source_code/src/pages/design/
+/source_code/src/data/designTokens.js
+
+# Tool caches and temporary editor files
+.vite/
+.cache/
+*.tsbuildinfo
+*.tmp
+*.bak

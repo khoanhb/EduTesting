@@ -1,0 +1,47 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+title UC08 - Chấm và đối soát (thiết kế tích hợp dự kiến)
+|Backend FastAPI|
+start
+note right
+  FE hiện so khớp từ khóa trên mock, chấm tay bằng state.
+  Đây không phải AI chấm tự luận; server chưa tích hợp.
+end note
+:Nhận lượt thi đã nộp và snapshot đáp án;
+:Chấm trắc nghiệm theo loại câu hỏi;
+:So khớp từ khóa theo cấu hình hoa/thường và điểm từng từ khóa;
+if (Đủ điều kiện chấm tự động?) then (Có)
+  :Ghi điểm tự động;
+else (Không)
+  :Ghi gợi ý, đánh dấu chờ GV đối soát;
+endif
+:Lưu điểm tạm theo câu/lượt;
+|Giảng viên|
+:Lọc theo môn, học kỳ, đề, mã đề, câu và trạng thái;
+:Xem câu trả lời, từ khóa, điểm gợi ý và lý do;
+:Chấm/sửa điểm trong giới hạn; nhập nhận xét nếu có;
+:Nhấn lưu đối soát;
+|Backend FastAPI|
+:Kiểm tra quyền, trạng thái lượt và giới hạn điểm;
+if (Dữ liệu hợp lệ?) then (Có)
+  :Lưu điểm từng câu, người chấm và lịch sử;
+  :Tính tổng điểm và áp dụng quyết định xử lý vi phạm đã hoàn tất;
+else (Không)
+  |Giao diện|
+  :Báo lỗi, giữ thay đổi chưa lưu;
+  stop
+endif
+|Backend FastAPI|
+if (Còn câu chờ chấm hoặc vi phạm PENDING?) then (Có)
+  :Giữ kết quả chờ xử lý, chưa công bố điểm;
+else (Không)
+  :Chốt điểm, xét chính sách công bố độc lập;
+  note right: Lưu/chốt điểm không mặc nhiên công bố cho SV.
+endif
+|Giao diện|
+:Thông báo đã lưu, cập nhật trạng thái và điểm theo server;
+:Kết quả SV được đọc theo quyền ở UC12;
+stop
+@enduml

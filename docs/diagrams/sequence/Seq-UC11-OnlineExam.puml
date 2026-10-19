@@ -1,0 +1,56 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam maxMessageSize 110
+title UC11 - Làm bài thi (thiết kế tích hợp dự kiến)
+actor "Sinh viên" as sv
+participant "Giao diện làm bài" as ui
+participant "FastAPI (Python)" as api
+database "Kho dữ liệu" as db
+note over ui, db
+  FE hiện dùng state/mock, chưa có autosave/submit server hoặc requestFullscreen.
+  Endpoint dưới đây là đề xuất từ API-CONTRACT; base URL cần BE chốt.
+end note
+sv -> ui : Đồng ý quy chế, bắt đầu làm bài
+ui -> api : POST /exams/{id}/attempts
+api -> db : Kiểm tra quyền được giao, lịch, số lượt và lượt đang làm
+alt Không đủ điều kiện hoặc không tồn tại
+  api --> ui : Lỗi 403/404/409 và lý do
+  ui --> sv : Không mở phòng thi
+else Hợp lệ
+  api -> db : Tạo/khôi phục attempt và snapshot câu hỏi
+  api --> ui : attemptId, serverNow, expiresAt, questions, answers
+  note right of ui : Không nhận đáp án chuẩn trong lượt đang làm.
+  ui --> sv : Hiển thị bài, timer theo hạn server
+  loop Khi lượt đang làm
+    sv -> ui : Trả lời hoặc sửa câu trả lời
+    ui -> api : PUT /attempts/{attemptId}/answers
+    api -> db : Kiểm tra chủ lượt, hạn và trạng thái; lưu theo questionId
+    alt Lưu thành công
+      api --> ui : Xác nhận đã lưu
+      ui --> sv : Hiển thị đã lưu
+    else Mất kết nối hoặc lỗi lưu
+      ui --> sv : Báo chưa lưu; giữ dữ liệu trên UI và cho thử lại
+    end
+  end
+  alt SV nộp chủ động
+    sv -> ui : Nộp bài và xác nhận
+    ui -> api : POST /attempts/{attemptId}/submit
+  else Đến expiresAt
+    api -> db : Thu bài theo hạn server
+    ui -> ui : Dừng timer, khóa UI, thông báo hết giờ
+    ui -> api : POST /attempts/{attemptId}/submit (đối soát trạng thái)
+  else Đình chỉ theo UC10
+    api -> db : Chuyển lượt sang đình chỉ và thu bài
+    ui -> ui : Dừng timer; không mở thêm modal hết giờ
+    ui -> api : GET /attempts/{attemptId}
+  end
+  api -> db : Chốt đúng một lần; submit lặp trả lại cùng trạng thái
+  api -> db : Chấm tự động/chờ đối soát UC08
+  api --> ui : Trạng thái lượt cuối cùng
+  ui -> api : GET /attempts/{attemptId}/result
+  api --> ui : Chỉ dữ liệu được công bố theo UC12
+  ui --> sv : Kết quả hoặc thông báo đang chờ xử lý/chưa công bố
+end
+@enduml

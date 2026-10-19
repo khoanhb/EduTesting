@@ -1,0 +1,36 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName "Times New Roman"
+actor "Giảng viên" as gv
+rectangle "Ngân hàng câu hỏi và đề thi - Phạm vi mục tiêu" {
+  usecase "UC05: Ngân hàng câu hỏi" as bank
+  usecase "Tạo/sửa/xem trước/xóa câu hỏi" as question
+  usecase "Lọc và thao tác hàng loạt" as bulk
+  usecase "UC06: Gợi ý câu hỏi AI" as ai
+  usecase "Duyệt câu và lưu ngân hàng" as approve
+  usecase "UC07: Đề thi và ma trận" as exam
+  usecase "Chọn câu thủ công" as manual
+  usecase "Bốc câu theo ma trận" as matrix
+  usecase "Cấu hình thời gian, lượt,\nmã đề và quyền công bố" as config
+  usecase "Lưu nháp / Xuất bản" as publish
+  question ..> bank : <<extend>>
+  bulk ..> bank : <<extend>>
+  ai ..> bank : <<extend>>
+  approve ..> ai : <<extend>>\n[câu đã được duyệt]
+  manual ..> exam : <<extend>>\n[phương thức thủ công]
+  matrix ..> exam : <<extend>>\n[phương thức ma trận]
+  exam ..> config : <<include>>
+  publish ..> exam : <<extend>>
+}
+gv -- bank
+gv -- ai
+gv -- exam
+note bottom of config
+  settings: antiCheat, showScoreImmediately, allowReview,
+  shuffleQuestions, shuffleAnswers; giới hạn và quyền do BE kiểm tra.
+end note
+note bottom of ai : FE hiện mô phỏng AI; dịch vụ và lưu server là thiết kế dự kiến.
+@enduml

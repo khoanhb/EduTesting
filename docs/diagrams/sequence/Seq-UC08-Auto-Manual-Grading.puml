@@ -1,0 +1,41 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam maxMessageSize 110
+title UC08 - Chấm và đối soát (thiết kế tích hợp dự kiến)
+actor "Giảng viên" as gv
+participant "Giao diện chấm tự luận" as ui
+participant "FastAPI (Python)" as api
+database "Kho dữ liệu" as db
+note over ui, db
+  FE hiện dùng mock/state; chưa có lưu điểm hoặc đồng bộ server.
+  So khớp từ khóa là quy tắc chấm, không phải dịch vụ AI.
+end note
+gv -> ui : Chọn môn/đề và bộ lọc câu, mã đề, trạng thái
+ui -> api : GET /exams/{id}/pending-essays
+api -> db : Kiểm tra phạm vi GV; đọc câu trả lời và trạng thái chấm
+api --> ui : Danh sách, từ khóa, điểm gợi ý và nhận xét
+gv -> ui : Chấm/sửa điểm và nhận xét
+ui -> ui : Cập nhật bản sửa chưa lưu
+gv -> ui : Lưu và cập nhật điểm
+ui -> api : PUT /exams/{id}/grade-essays
+api -> db : Kiểm tra quyền, câu/lượt, giới hạn điểm và xung đột
+alt Không hợp lệ
+  api --> ui : Lỗi 403/409/422
+  ui --> gv : Giữ bản sửa và hiển thị lỗi
+else Hợp lệ
+  api -> db : Lưu điểm từng câu và lịch sử người chấm
+  api -> db : Tính tổng từ thành phần và quyết định vi phạm đã hoàn tất
+  alt Còn chờ chấm hoặc vi phạm PENDING
+    api -> db : Giữ trạng thái chờ; chưa công bố
+  else Hoàn tất
+    api -> db : Chốt điểm; xét chính sách công bố riêng
+  end
+  api --> ui : Điểm đã lưu và trạng thái công bố hiện tại
+  ui --> gv : Thông báo lưu thành công
+end
+opt SV xem kết quả
+  note over api, db : Áp dụng UC12; không trả điểm/đáp án chưa được công bố.
+end
+@enduml

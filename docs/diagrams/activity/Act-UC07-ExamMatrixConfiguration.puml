@@ -1,0 +1,61 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+title UC07 - Cấu hình đề và ma trận (thiết kế tích hợp dự kiến)
+|Giảng viên|
+start
+:Chọn tạo/sửa đề trong phạm vi môn được giao;
+:Nhập mã, tên, loại, môn, học kỳ, phòng và lịch;
+:Thiết lập thời lượng, số lượt và quy chế;
+:Cấu hình mã đề, xáo trộn, antiCheat,\nshowScoreImmediately và allowReview;
+|Giao diện|
+note right
+  FE hiện dựng payload; lưu/xuất bản chưa gọi server.
+  Giữa kỳ/Cuối kỳ: form yêu cầu 1 lượt và bật antiCheat.
+end note
+|Giảng viên|
+if (Chọn câu theo cách nào?) then (Ma trận)
+  :Chọn chương, số câu và tỷ lệ độ khó;
+  |Backend FastAPI|
+  :Kiểm tra nguồn câu và phân bổ ma trận;
+  if (Đủ câu hợp lệ?) then (Có)
+    :Trả danh sách câu để duyệt;
+  else (Không)
+    |Giao diện|
+    :Báo thiếu câu, cho chỉnh ma trận;
+    stop
+  endif
+else (Thủ công)
+  |Giảng viên|
+  :Tìm/lọc và chọn câu từ ngân hàng;
+endif
+|Giảng viên|
+:Xem trước và điều chỉnh danh sách câu;
+:Chọn lưu nháp hoặc lưu và xuất bản;
+|Backend FastAPI|
+:Kiểm tra quyền, trạng thái đề, lịch, số lượt và dữ liệu;
+if (Cấu hình hợp lệ để lưu?) then (Có)
+  :Lưu cấu hình nháp cùng câu/ma trận;
+else (Không)
+  |Giao diện|
+  :Báo lỗi và giữ form;
+  stop
+endif
+|Giảng viên|
+if (Yêu cầu xuất bản?) then (Có)
+  |Backend FastAPI|
+  :Kiểm tra đủ số câu, tổng điểm và cấu hình;
+  if (Đủ điều kiện xuất bản?) then (Có)
+    :Tạo snapshot/mã đề theo cấu hình xáo trộn;
+    :Xuất bản; xác định sắp diễn ra/đang diễn ra theo lịch server;
+  else (Không)
+    |Giao diện|
+    :Báo lý do; nháp đã lưu vẫn được giữ;
+    stop
+  endif
+endif
+|Giao diện|
+:Thông báo theo kết quả server và tải lại danh sách;
+stop
+@enduml

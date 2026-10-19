@@ -1,0 +1,47 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam maxMessageSize 110
+title UC12 - Kết quả và xem lại (thiết kế tích hợp dự kiến)
+actor "Sinh viên" as sv
+participant "Kết quả/Lịch sử/Xem lại" as ui
+participant "FastAPI (Python)" as api
+database "Kho dữ liệu" as db
+note over ui, db
+  Quyền hiện tính trên mock trong examAccess.js.
+  API và trạng thái xử lý dưới đây là đề xuất để BE chốt.
+end note
+sv -> ui : Chọn đúng lượt thi (attemptId)
+ui -> api : GET /attempts/{attemptId}/result
+api -> db : Kiểm tra chủ lượt; đọc kết quả, biên bản, chính sách
+alt Không tồn tại hoặc không có quyền
+  api --> ui : 404/403, không trả dữ liệu bài
+  ui --> sv : Hiển thị lý do không truy cập
+else Được truy cập
+  alt Vi phạm đang PENDING
+    api --> ui : Trạng thái chờ xử lý; score=null; canReview=false; canShowDetails=false
+    ui --> sv : Chờ biên bản, ẩn điểm và số câu/đáp án
+  else Không còn PENDING
+    api --> ui : Trạng thái, thời gian, score nếu đã công bố, canReview, canShowDetails
+    ui --> sv : Điểm được công bố hoặc "Chưa công bố"; nút xem lại theo quyền
+  end
+  opt SV yêu cầu xem lại, kể cả nhập URL trực tiếp
+    ui -> api : GET /attempts/{attemptId}/review
+    api -> db : Kiểm tra lại allowReview, quyền lượt và trạng thái xử lý
+    alt PENDING hoặc CANCELLED hoặc không có quyền xem lại
+      api --> ui : 403, không trả snapshot/đáp án
+      ui --> sv : Không được xem lại
+    else Được xem lại và được xem chi tiết chấm điểm
+      api --> ui : Snapshot bài, câu trả lời, đáp án, lời giải và điểm từng câu
+      ui --> sv : Hiển thị đúng/sai và lời giải
+    else Được xem bài nhưng chưa công bố điểm/chi tiết
+      api --> ui : Câu hỏi và câu trả lời SV; loại đáp án/điểm/lời giải/nhãn đúng sai
+      ui --> sv : Hiển thị nhãn trung tính
+    end
+  end
+  opt Có biên bản được phép đọc
+    ui --> sv : Hiển thị biên bản chỉ đọc của đúng attemptId
+  end
+end
+@enduml

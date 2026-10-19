@@ -1,0 +1,44 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName "Times New Roman"
+actor "Admin" as admin
+actor "Giảng viên / Giám thị" as gv
+actor "Sinh viên" as sv
+rectangle "EduTesting - Phạm vi chức năng mục tiêu" {
+  usecase "UC01: Xác thực và tài khoản" as UC01
+  usecase "UC02: Tổng quan quản trị" as UC02
+  usecase "UC03: Quản lý người dùng\nvà phân quyền" as UC03
+  usecase "UC04: Môn học và chương" as UC04
+  usecase "UC05: Ngân hàng câu hỏi" as UC05
+  usecase "UC06: Gợi ý câu hỏi AI" as UC06
+  usecase "UC07: Đề thi và ma trận" as UC07
+  usecase "UC08: Chấm và đối soát" as UC08
+  usecase "UC09: Phân tích kết quả" as UC09
+  usecase "UC10: Giám sát và vi phạm" as UC10
+  usecase "UC11: Làm bài thi" as UC11
+  usecase "UC12: Kết quả, xem lại\nvà lịch sử" as UC12
+}
+admin -- UC01
+admin -- UC02
+admin -- UC03
+admin -- UC04
+admin -- UC10
+gv -- UC01
+gv -- UC05
+gv -- UC06
+gv -- UC07
+gv -- UC08
+gv -- UC09
+gv -- UC10
+sv -- UC01
+sv -- UC11
+sv -- UC12
+note bottom of UC01
+  Sơ đồ phạm vi mục tiêu theo FR-01..FR-12.
+  FE: React/JSX + Vite; BE dự kiến: Python/FastAPI.
+  Xác thực server, lưu dữ liệu, AI và realtime chưa tích hợp.
+end note
+@enduml

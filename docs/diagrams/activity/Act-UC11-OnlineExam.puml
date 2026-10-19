@@ -1,0 +1,72 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+title UC11 - Làm bài thi (thiết kế tích hợp dự kiến)
+
+|Sinh viên|
+start
+:Chọn đề, đọc và đồng ý quy chế;
+:Nhấn "Bắt đầu làm bài";
+|Backend|
+note right
+  FE hiện kiểm tra ID, status ACTIVE và số lượt trên mock.
+  Tạo/khôi phục lượt, autosave, nộp server là phần cần tích hợp.
+end note
+:Kiểm tra phiên, đề được giao, lịch mở và giới hạn lượt;
+if (Đủ điều kiện?) then (Có)
+  :Tạo hoặc khôi phục lượt đang làm;
+  :Trả attemptId, serverNow, expiresAt và câu trả lời đã lưu;
+  :Chỉ trả câu hỏi, không trả đáp án chuẩn;
+else (Không)
+  |Giao diện|
+  :Báo lý do không được vào thi;
+  stop
+endif
+|Giao diện|
+:Bắt đầu đếm ngược theo hạn server;
+:Hiển thị câu hỏi và điều hướng;
+if (antiCheat bật?) then (Có)
+  :Đăng ký giám sát sự kiện theo UC10;
+endif
+while (Lượt còn đang làm và chưa hết hạn?) is (Có)
+  |Sinh viên|
+  :Trả lời, điều hướng hoặc đánh dấu câu;
+  |Giao diện|
+  :Gửi đáp án kèm attemptId, questionId;
+  |Backend|
+  :Kiểm tra trạng thái lượt và lưu đáp án;
+  |Giao diện|
+  if (Server xác nhận lưu?) then (Có)
+    :Hiển thị đã lưu;
+  else (Không)
+    :Báo chưa lưu, giữ câu trả lời trên UI để thử lại;
+  endif
+  |Sinh viên|
+  if (Muốn nộp bài?) then (Có)
+    |Giao diện|
+    :Hiển thị xác nhận cùng số câu đã làm/chưa làm;
+    |Sinh viên|
+    if (Xác nhận?) then (Có)
+      break
+    endif
+  endif
+endwhile (Không)
+|Giao diện|
+:Dừng timer, khóa thao tác;
+if (Lượt bị đình chỉ theo UC10?) then (Có)
+  :Không mở thêm modal hết giờ;
+else (Không)
+  if (Đã hết hạn?) then (Có)
+    :Hiển thị thông báo hết giờ;
+  endif
+endif
+|Backend|
+:Chốt câu trả lời, thu bài đúng một lần theo attemptId;
+:Chấm tự động/chuyển đối soát theo UC08;
+:Giữ kết quả chờ xử lý nếu bị đình chỉ;
+|Giao diện|
+:Mở kết quả theo quyền công bố ở UC12;
+stop
+@enduml

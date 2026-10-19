@@ -1,0 +1,208 @@
+---
+title: EduTesting - ERD khái niệm (đề xuất cho Python/FastAPI)
+---
+%% Mô hình thiết kế dự kiến; FE hiện dùng mock, chưa có DB/ORM hoặc migration.
+%% Kiểu dữ liệu và tên bảng là khái niệm, chưa chọn hệ quản trị CSDL.
+erDiagram
+    USERS {
+        string id PK
+        string identifier UK
+        string role
+        string status
+    }
+    SUBJECTS {
+        string id PK
+        string code UK
+        string name
+        string status
+    }
+    CHAPTERS {
+        string id PK
+        string subjectId FK
+        string name
+        int order
+    }
+    TEACHING_ASSIGNMENTS {
+        string id PK
+        string teacherId FK
+        string subjectId FK
+    }
+    QUESTION_BANKS {
+        string id PK
+        string subjectId FK
+        string managedBy FK
+    }
+    QUESTIONS {
+        string id PK
+        string bankId FK
+        string chapterId FK
+        string type
+        string difficulty
+        string content
+        boolean isCaseSensitive
+        boolean allowPartialKeywordScore
+        json acceptedKeywords
+    }
+    ANSWERS {
+        string id PK
+        string questionId FK
+        string content
+        boolean isCorrect
+    }
+    AI_GENERATION_REQUESTS {
+        string id PK
+        string requestedBy FK
+        string subjectId FK
+        string chapterId FK
+        string status
+    }
+    SEMESTERS {
+        string id PK
+        string label
+    }
+    EXAMS {
+        string id PK
+        string examCode UK
+        string subjectId FK
+        string semesterId FK
+        string createdBy FK
+        string category
+        string status
+        datetime openAt
+        datetime closeAt
+        int durationMinutes
+        int maxAttempts
+        boolean antiCheat
+        boolean showScoreImmediately
+        boolean allowReview
+        boolean shuffleQuestions
+        boolean shuffleAnswers
+    }
+    EXAM_MATRICES {
+        string id PK
+        string examId FK
+        string chapterId FK
+        string difficulty
+        int questionCount
+    }
+    EXAM_QUESTIONS {
+        string id PK
+        string examId FK
+        string questionId FK
+        int order
+        decimal maxScore
+    }
+    EXAM_CODES {
+        string id PK
+        string examId FK
+        string testCode
+        json questionOrder
+        json answerOrder
+    }
+    EXAM_ROOMS {
+        string id PK
+        string examId FK
+        string roomCode
+        int capacity
+    }
+    EXAM_ASSIGNMENTS {
+        string id PK
+        string examId FK
+        string studentId FK
+    }
+    EXAM_ATTEMPTS {
+        string id PK
+        string examId FK
+        string studentId FK
+        string examCodeId FK
+        string examRoomId FK
+        int attemptNumber
+        string status
+        string violationResolution
+        datetime startedAt
+        datetime expiresAt
+        datetime submittedAt
+    }
+    ATTEMPT_QUESTIONS {
+        string id PK
+        string attemptId FK
+        string questionId FK
+        int order
+        decimal maxScore
+        json questionSnapshot
+        json gradingSnapshot
+    }
+    STUDENT_ANSWERS {
+        string id PK
+        string attemptQuestionId FK
+        string textAnswer
+        decimal gradedScore
+        string gradingStatus
+        string teacherComment
+        datetime savedAt
+    }
+    SELECTED_ANSWERS {
+        string id PK
+        string studentAnswerId FK
+        string answerId FK
+    }
+    EXAM_RESULTS {
+        string id PK
+        string attemptId FK
+        decimal rawScore
+        decimal score
+        boolean scorePublished
+        datetime publishedAt
+    }
+    VIOLATION_LOGS {
+        string id PK
+        string attemptId FK
+        string eventId
+        string type
+        datetime occurredAt
+    }
+    VIOLATION_REPORTS {
+        string id PK
+        string attemptId FK
+        string reportedBy FK
+        string penaltyCode
+        string detail
+        datetime reportedAt
+        datetime resolvedAt
+    }
+
+    USERS ||--o{ TEACHING_ASSIGNMENTS : teacher
+    SUBJECTS ||--o{ TEACHING_ASSIGNMENTS : assigned
+    SUBJECTS ||--o{ CHAPTERS : has
+    SUBJECTS ||--o{ QUESTION_BANKS : has
+    USERS ||--o{ QUESTION_BANKS : manages
+    QUESTION_BANKS ||--o{ QUESTIONS : contains
+    CHAPTERS ||--o{ QUESTIONS : classifies
+    QUESTIONS ||--o{ ANSWERS : has
+    USERS ||--o{ AI_GENERATION_REQUESTS : requests
+    SUBJECTS ||--o{ AI_GENERATION_REQUESTS : for
+    CHAPTERS |o--o{ AI_GENERATION_REQUESTS : optional_scope
+    SEMESTERS ||--o{ EXAMS : groups
+    SUBJECTS ||--o{ EXAMS : has
+    USERS ||--o{ EXAMS : creates
+    EXAMS ||--o{ EXAM_MATRICES : defines
+    CHAPTERS ||--o{ EXAM_MATRICES : specifies
+    EXAMS ||--o{ EXAM_QUESTIONS : includes
+    QUESTIONS ||--o{ EXAM_QUESTIONS : selected
+    EXAMS ||--o{ EXAM_CODES : generates
+    EXAMS ||--o{ EXAM_ROOMS : allocates
+    EXAMS ||--o{ EXAM_ASSIGNMENTS : assigned
+    USERS ||--o{ EXAM_ASSIGNMENTS : student
+    EXAMS ||--o{ EXAM_ATTEMPTS : has
+    USERS ||--o{ EXAM_ATTEMPTS : takes
+    EXAM_CODES ||--o{ EXAM_ATTEMPTS : uses
+    EXAM_ROOMS ||--o{ EXAM_ATTEMPTS : occurs_in
+    EXAM_ATTEMPTS ||--|{ ATTEMPT_QUESTIONS : snapshots
+    QUESTIONS ||--o{ ATTEMPT_QUESTIONS : source
+    ATTEMPT_QUESTIONS ||--o| STUDENT_ANSWERS : answered_by
+    STUDENT_ANSWERS ||--o{ SELECTED_ANSWERS : selects
+    ANSWERS ||--o{ SELECTED_ANSWERS : chosen
+    EXAM_ATTEMPTS ||--o| EXAM_RESULTS : produces
+    EXAM_ATTEMPTS ||--o{ VIOLATION_LOGS : records
+    EXAM_ATTEMPTS ||--o| VIOLATION_REPORTS : processed_by
+    USERS ||--o{ VIOLATION_REPORTS : reports

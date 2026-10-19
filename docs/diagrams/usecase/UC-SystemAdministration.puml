@@ -1,0 +1,36 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName "Times New Roman"
+actor "Admin" as admin
+rectangle "Quản trị hệ thống - Phạm vi chức năng mục tiêu" {
+  usecase "UC02: Tổng quan quản trị" as dashboard
+  usecase "Xem KPI và phòng thi" as live
+  usecase "UC03: Quản lý người dùng\nvà phân quyền" as users
+  usecase "Thêm/sửa tài khoản" as editUser
+  usecase "Khóa/mở, đặt lại mật khẩu\nđơn lẻ/hàng loạt" as bulk
+  usecase "Nhập/xuất danh sách" as files
+  usecase "Phân công phạm vi GV" as scope
+  usecase "UC04: Môn học và chương" as subjects
+  usecase "Thêm/sửa môn và phân công GV" as editSubject
+  usecase "Đổi tên/sắp xếp chương" as chapters
+  usecase "Xóa theo ràng buộc tham chiếu" as deletion
+  dashboard ..> live : <<include>>
+  editUser ..> users : <<extend>>
+  bulk ..> users : <<extend>>
+  files ..> users : <<extend>>
+  scope ..> users : <<extend>>
+  editSubject ..> subjects : <<extend>>
+  chapters ..> subjects : <<extend>>
+  deletion ..> subjects : <<extend>>
+}
+admin -- dashboard
+admin -- users
+admin -- subjects
+note bottom of users
+  Tiền điều kiện: phiên và quyền Admin do BE kiểm tra.
+  FE hiện dùng state/mock; import/export chưa xử lý tệp thật.
+end note
+@enduml

@@ -1,0 +1,36 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+title UC06 - Gợi ý câu hỏi AI (thiết kế tích hợp dự kiến)
+|Giảng viên|
+start
+:Chọn môn/chương trong phạm vi phụ trách;
+:Nhập tài liệu, số lượng, loại câu hỏi và độ khó;
+:Nhấn tạo câu hỏi;
+|Backend FastAPI|
+note right: FE hiện mô phỏng kết quả; dịch vụ AI và lưu ngân hàng chưa nối server.
+:Kiểm tra quyền, cấu hình và ngữ cảnh;
+:Gửi yêu cầu tới dịch vụ AI;
+if (Kết quả hợp lệ?) then (Có)
+  :Chuẩn hóa câu hỏi, phương án, đáp án và lời giải;
+else (Không)
+  |Giao diện|
+  :Báo lỗi/timeout; cho sửa cấu hình và thử lại;
+  stop
+endif
+|Giảng viên|
+:Xem trước, sửa hoặc bỏ câu hỏi;
+if (Cần sinh lại câu?) then (Có)
+  |Backend FastAPI|
+  :Gọi lại dịch vụ và kiểm tra kết quả trước khi hiển thị;
+endif
+|Giảng viên|
+:Chọn câu đạt yêu cầu; nhấn lưu đã chọn/lưu tất cả;
+|Backend FastAPI|
+:Kiểm tra quyền và tính hợp lệ của từng câu đã duyệt;
+:Lưu các câu hợp lệ vào ngân hàng;
+|Giao diện|
+:Thông báo số câu lưu thành công và lỗi còn lại;
+stop
+@enduml

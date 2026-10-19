@@ -1,0 +1,49 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam maxMessageSize 110
+title UC04 - Môn học và chương (thiết kế tích hợp dự kiến)
+actor "Admin" as admin
+participant "Giao diện môn học" as ui
+participant "FastAPI (Python)" as api
+database "Kho dữ liệu" as db
+note over ui, db
+  FE hiện dùng mock/state. Endpoint là đề xuất từ API-CONTRACT.
+  Tên bảng/ORM/database và base URL cần BE chốt.
+end note
+admin -> ui : Mở thêm/sửa môn
+ui -> api : Tải danh mục bộ môn và GV theo quyền
+api --> ui : Danh mục hợp lệ
+ui --> admin : Form môn học và chương
+admin -> ui : Nhập thông tin, phân công GV; đổi tên/thứ tự chương
+opt Xóa chương khỏi cấu hình
+  ui --> admin : Chặn nếu dữ liệu hiện có cho biết chương có câu hỏi
+end
+admin -> ui : Lưu
+alt Tạo mới
+  ui -> api : POST /admin/subjects
+else Chỉnh sửa
+  ui -> api : PATCH /admin/subjects/{id}
+end
+api -> db : Kiểm tra quyền, mã duy nhất, danh mục và tham chiếu chương
+alt Không hợp lệ hoặc có xung đột
+  api --> ui : Lỗi chi tiết 403/409/422
+  ui --> admin : Giữ form và hiển thị lỗi
+else Hợp lệ
+  api -> db : Giao dịch lưu Subject, TeachingAssignment, Chapter (order)
+  db --> api : Xác nhận lưu
+  api --> ui : Dữ liệu đã lưu
+  ui --> admin : Báo thành công, tải lại danh sách
+end
+opt Admin xác nhận xóa môn
+  ui -> api : DELETE /admin/subjects/{id}
+  api -> db : Kiểm tra quyền và câu hỏi/đề thi tham chiếu
+  alt Còn tham chiếu
+    api --> ui : 409 và lý do chặn xóa
+  else Được xóa
+    api -> db : Xóa theo ràng buộc toàn vẹn
+    api --> ui : Xác nhận xóa
+  end
+end
+@enduml

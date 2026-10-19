@@ -1,0 +1,42 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam maxMessageSize 110
+title UC06 - Gợi ý câu hỏi AI (thiết kế tích hợp dự kiến)
+actor "Giảng viên" as gv
+participant "Giao diện tạo câu hỏi AI" as ui
+participant "FastAPI (Python)" as api
+participant "Dịch vụ AI (chưa chốt nhà cung cấp)" as ai
+database "Kho dữ liệu" as db
+note over ui, db
+  FE hiện dùng kết quả mô phỏng; gọi AI và lưu server chưa triển khai.
+  Endpoint theo API-CONTRACT; tên schema và base URL cần BE xác nhận.
+end note
+gv -> ui : Chọn môn/chương, nhập ngữ cảnh và cấu hình
+ui -> api : POST /ai/generate-questions
+api -> db : Kiểm tra quyền môn/chương và cấu hình
+api -> ai : Yêu cầu tạo câu hỏi theo schema
+alt AI lỗi/timeout hoặc schema không hợp lệ
+  ai --> api : Lỗi hoặc dữ liệu không đạt
+  api --> ui : Phản hồi lỗi rõ ràng
+  ui --> gv : Giữ cấu hình, cho thử lại
+else Kết quả hợp lệ
+  ai --> api : Danh sách câu hỏi nháp, đáp án, lời giải
+  api --> ui : Kết quả đã kiểm tra schema
+  ui --> gv : Xem trước, chỉnh sửa, xóa hoặc sinh lại
+  opt Sinh lại câu
+    ui -> api : POST /ai/generate-questions với cấu hình cần sinh lại
+    api -> ai : Tạo lại theo cấu hình
+    ai --> api : Kết quả hoặc lỗi
+    api --> ui : Kết quả đã kiểm tra hoặc lý do thất bại
+  end
+  gv -> ui : Xác nhận lưu các câu đạt yêu cầu
+  loop Từng câu đã được duyệt
+    ui -> api : POST /questions
+    api -> db : Kiểm tra quyền và dữ liệu, lưu câu hỏi cùng đáp án/từ khóa
+    api --> ui : Câu đã lưu hoặc lỗi riêng của câu
+  end
+  ui --> gv : Tổng hợp số câu lưu thành công và lỗi
+end
+@enduml

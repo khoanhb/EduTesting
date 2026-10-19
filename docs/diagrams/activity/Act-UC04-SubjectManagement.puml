@@ -1,0 +1,55 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+title UC04 - Môn học và chương (thiết kế tích hợp dự kiến)
+|Admin|
+start
+:Chọn thêm, sửa hoặc xóa môn học;
+|Giao diện|
+note right: FE hiện thao tác trên state/mock; lưu server là phần cần tích hợp.
+:Hiển thị thông tin môn, bộ môn, GV và chương theo quyền;
+|Admin|
+if (Xóa môn?) then (Có)
+  :Xác nhận xóa;
+  |Backend FastAPI|
+  :Kiểm tra quyền và câu hỏi/đề thi đang tham chiếu;
+  if (Có tham chiếu?) then (Có)
+    |Giao diện|
+    :Chặn xóa, hiển thị lý do;
+    stop
+  else (Không)
+    |Backend FastAPI|
+    :Xóa môn theo giao dịch dữ liệu;
+  endif
+else (Thêm/sửa)
+  :Nhập mã, tên, tín chỉ, bộ môn, trạng thái và GV;
+  :Thêm/đổi tên/sắp xếp chương theo thứ tự;
+  if (Yêu cầu xóa chương?) then (Có)
+    |Backend FastAPI|
+    :Kiểm tra câu hỏi đang gắn với chương;
+    if (Có câu hỏi?) then (Có)
+      |Giao diện|
+      :Giữ chương, báo lý do không được xóa;
+    else (Không)
+      |Giao diện|
+      :Loại chương khỏi cấu hình cần lưu;
+    endif
+  endif
+  |Admin|
+  :Nhấn lưu thông tin;
+  |Backend FastAPI|
+  :Kiểm tra quyền, mã duy nhất, danh mục, thứ tự và ràng buộc xóa chương;
+  if (Hợp lệ?) then (Có)
+    :Lưu môn, phân công GV và chương trong cùng giao dịch;
+  else (Không)
+    |Giao diện|
+    :Báo lỗi chi tiết và giữ dữ liệu form;
+    stop
+  endif
+endif
+|Giao diện|
+:Chỉ báo thành công sau xác nhận server;
+:Tải lại danh sách môn;
+stop
+@enduml
