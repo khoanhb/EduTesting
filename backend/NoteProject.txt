@@ -1,0 +1,86 @@
+GHI CHU DU AN - HE THONG KHAO THI ONLINE
+Cap nhat: 19/10/2026
+
+1. THONG TIN CHUNG
+Du an: Nen tang khao thi online
+Backend: Python, FastAPI, SQLAlchemy, SQLite
+Cong cu: VS Code, Windows PowerShell
+Thu muc hien tai: C:\52200017\DACNTT\52200017
+Database: exam.db
+
+2. FILE CODE VA CHUC NANG
+main.py - Khoi tao FastAPI, tao bang database, dang ky router Users va Authentication.
+app/database/database.py - Ket noi SQLite, engine, SessionLocal, Base, get_db.
+app/models/__init__.py - Model User: id, username, password, full_name, email, role, created_at.
+app/schemas.py - UserCreate, UserResponse; du lieu dau vao va dau ra.
+app/routers/users.py - API tao nguoi dung, danh sach, chi tiet theo ID.
+app/routers/auth.py - API dang nhap, kiem tra mat khau va tao JWT (theo anh Swagger moi nhat).
+app/security.py - Ham hash_password, verify_password (Argon2), create_access_token (JWT), theo cac buoc da huong dan.
+exam.db - Co so du lieu SQLite.
+venv/ - Moi truong ao Python, da tao lai tren may hien tai.
+
+Luu y: File ZIP gui truoc do la phien ban cu, chua co auth.py/security.py va luu mat khau thuong. Anh Swagger moi nhat cho thay router dang nhap da duoc dang ky; can test de xac nhan hash va JWT thuc su hoat dong.
+
+3. DANH SACH API DA XUAT HIEN TREN SWAGGER
+GET  /                   - Trang chu, kiem tra Backend
+GET  /users/             - Lay danh sach nguoi dung
+POST /users/             - Tao tai khoan moi
+GET  /users/{user_id}    - Lay thong tin theo ID
+POST /auth/login         - Dang nhap, nhan JWT neu thanh cong
+
+Chua thay PUT /users/{user_id} va DELETE /users/{user_id} tren Swagger moi nhat.
+
+4. CAC LINK API (SERVER PHAI DANG CHAY)
+Swagger UI:          http://127.0.0.1:8000/docs
+OpenAPI JSON:        http://127.0.0.1:8000/openapi.json
+Backend home (GET):  http://127.0.0.1:8000/
+Users (GET/POST):    http://127.0.0.1:8000/users/
+User theo ID (GET):  http://127.0.0.1:8000/users/1
+Dang nhap (POST):    http://127.0.0.1:8000/auth/login
+
+Chu y: POST /auth/login va POST /users/ phai goi bang Swagger, Postman hoac HTTP client, khong phai mo truc tiep URL tren trinh duyet.
+Link /users/1 la vi du; thay 1 bang ID nguoi dung thuc te.
+
+5. LINK THIET KE
+Figma design:
+https://www.figma.com/design/jPWoHTM80cXgx3cRiSgLuc/main?node-id=0-1
+Figma prototype:
+https://www.figma.com/proto/jPWoHTM80cXgx3cRiSgLuc/main?node-id=5-4&starting-point-node-id=5%3A4
+
+6. LENH CHAY BACKEND (POWERSHELL)
+cd C:\52200017\DACNTT\52200017
+.\venv\Scripts\Activate.ps1
+$env:JWT_SECRET_KEY = python -c "import secrets; print(secrets.token_urlsafe(48))"
+python -m uvicorn main:app --reload
+
+Neu thieu thu vien:
+python -m pip install fastapi "uvicorn[standard]" sqlalchemy "pwdlib[argon2]" PyJWT
+
+Sau khi co dong 'Application startup complete', mo Swagger UI.
+Dung server: Ctrl + C.
+Khong nhap chu '(venv) PS C:\...>' vao Terminal; do chi la dau nhac lenh.
+
+7. TIEN DO HIEN TAI
+[X] Tao lai va kich hoat venv.
+[X] Cai thu vien, chay FastAPI va mo Swagger.
+[X] Swagger hien thi 3 API Users, 1 API Authentication va API home.
+[ ] Xac nhan POST /users/ hash mat khau Argon2.
+[ ] Xac nhan POST /auth/login tra ve access_token hop le.
+[ ] Them xac thuc JWT cho API duoc bao ve.
+[ ] Phan quyen ADMIN / TEACHER / STUDENT.
+[ ] Them PUT va DELETE user neu can.
+[ ] Module mon hoc, chuong, ngan hang cau hoi, de thi, bai lam, cham diem, thong ke.
+
+8. LUU Y BAO MAT
+Khong chia se JWT_SECRET_KEY, mat khau that hoac day token len GitHub.
+Khong luu mat khau dang plain text. Tai khoan cu luu mat khau thuong can dat lai.
+Khong trien khai cong khai khi API chua duoc xac thuc va phan quyen.
+
+9. MAU GHI CHU MOI NGAY
+Ngay:
+Da lam:
+File da sua:
+API da test:
+Ket qua:
+Loi gap phai va cach sua:
+Viec tiep theo:
